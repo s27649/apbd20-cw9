@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Tutorial9.Data;
+using Tutorial9.Repositories;
+using Tutorial9.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +11,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 builder.Services.AddDbContext<ApbdContext>(options => options.UseSqlServer("Name=ConnectionStrings:Default"));
+builder.Services.AddScoped<ITripRepository, ITripRepository>();
+builder.Services.AddScoped<ITripService, ITripService>();
 
 var app = builder.Build();
 

@@ -1,6 +1,7 @@
+
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Tutorial9.Data;
+using Tutorial9.Services;
 
 namespace Tutorial9.Controllers;
 
@@ -9,22 +10,30 @@ namespace Tutorial9.Controllers;
 public class TripsController: ControllerBase
 {
     private readonly ApbdContext _context;
-    public TripsController(ApbdContext context)
+    private readonly ITripService _tripService;
+    public TripsController(ApbdContext context,ITripService tripService)
     {
         _context = context;
+        _tripService = tripService;
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetTrips()
+    public async Task<IActionResult> GetTrips([FromQuery]int page=1,[FromQuery] int pageSize=10)
     {
-        var trips = await _context.Trips.Select(e => new
+        var trips = await _tripService.GetTrips(page, pageSize);
+        return Ok(trips);
+    }
+    
+    [Route("api/clients/{idClient:int}")]
+    [HttpDelete]
+    public async Task<IActionResult> RemoveClient(int idClient)
+    {
+        var effectedCount = await _tripService.DeleteClient(idClient);
+        if (effectedCount == -1)
         {
-            Name = e.Name,
-            Contries = e.IdCountries.Select(c => new
-            {
-                Contry = c.Name
-            })
-        }).ToListAsync();
-        return Ok();
+            return StatusCode(StatusCodes.Status304NotModified);
+        }
+
+        return StatusCode(StatusCodes.Status200OK);
     }
 }
