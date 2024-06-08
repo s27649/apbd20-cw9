@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Tutorial9.Data;
 using Tutorial9.Models;
+using Tutorial9.Models.DTO_s;
 using Tutorial9.Repositories;
 
 namespace Tutorial9.Services;
@@ -16,36 +17,40 @@ public class TripService : ITripService
         _context = context;
     }
 
-    public  async Task<Trip> GetTrips(int pageNum, int pageSize)
+    public  async Task<PageDTO> GetTrips(int pageNum, int pageSize)
     {
-        var totalTrips = await _context.Trips.CountAsync();
-        var totalPages = (int)Math.Ceiling(totalTrips / (double)pageSize);
         var trips = await _repository.GetTrips(pageNum, pageSize);
-        var res = new
+        var tripsClientsCountries = trips.Select(trip => new TripClientDTO()
         {
-            pageNum = pageNum,
-            pageSize = pageSize,
-            allPages = totalPages,
-            trips = trips.Select(t => new
+            Name = trip.Name,
+            Description = trip.Description,
+            Datefrom = trip.DateFrom,
+            Dateto = trip.DateTo,
+            Maxpeople = trip.MaxPeople,
+            Clients = trip.ClientTrips.Select(clientTrip => new Client()
             {
-                Name = t.Name,
-                Description = t.Description,
-                DateFrom = t.DateFrom.ToString("yyyy-MM-dd"),
-                DateTo = t.DateTo.ToString("yyyy-MM-dd"),
-                MaxPeople = t.MaxPeople,
-                Countries = t.IdCountries.Select(c => new
-                {
-                    Name= c.Name 
-                    
-                }),
-                Clients = t.ClientTrips.Select(ct => new
-                    {   FirstName= ct.IdClientNavigation.FirstName, 
-                        LastName= ct.IdClientNavigation.LastName 
-                    }
-                )
-            })
+                FirstName = clientTrip.IdClientNavigation.FirstName,
+                LastName = clientTrip.IdClientNavigation.LastName
+            }).ToList(),
+            Countries = trip.IdCountries.Select(country => new Country()
+            {
+                Name = country.Name
+            }).ToList()
+        }).ToList();
+        var count = await _context.Trips.CountAsync();
+        var allPages = count / pageSize;
+        if (count % pageSize != 0)
+        {
+            allPages++;
+        }
+        var pageTripsModel = new PageDTO()
+        {
+            PageNum = pageNum,
+            AllPages = allPages,
+            PageSize = pageSize,
+            Trips = tripsClientsCountries
         };
-        return res;
+        return pageTripsModel;
     }
 
     public async Task<int> DeleteClient(int clientId)
@@ -61,5 +66,11 @@ public class TripService : ITripService
     public async Task<bool> IsClientWithTrip(int clientId)
     {
         return await _repository.IsClientWithTrip(clientId);
+    }
+
+    public Task<int> AddClient(Client client)
+    {
+        var newClient = _repository.AddClient(client);
+        return newClient;
     }
 }

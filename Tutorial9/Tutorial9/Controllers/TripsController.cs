@@ -1,6 +1,8 @@
 
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Tutorial9.Data;
+using Tutorial9.Models;
 using Tutorial9.Services;
 
 namespace Tutorial9.Controllers;
@@ -35,5 +37,20 @@ public class TripsController: ControllerBase
         }
 
         return StatusCode(StatusCodes.Status200OK);
+    }
+
+    [Route("/api/trips/{IdTrip}/clients")]
+    [HttpPost]
+    public async Task<IActionResult> AddClient(Client client)
+    {
+        var clientId = await _tripService.AddClient(new Client()
+        {
+            FirstName = client.FirstName,
+            LastName = client.LastName,
+            Email =client.Email,
+            Pesel = client.Pesel,
+            Telephone = client.Telephone
+        });
+        return Ok();
     }
 }

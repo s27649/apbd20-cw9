@@ -38,8 +38,18 @@ public class TripRepository : ITripRepository
         await _context.SaveChangesAsync();
         return 1;
     }
+
     public async Task<bool> IsClientWithTrip(int clientId)
     {
         return await _context.ClientTrips.AnyAsync(trip => trip.IdClient == clientId);
     }
+
+    public async Task<int> AddClient(Client client)
+    {
+        await _context.Clients.AddAsync(client);
+             await _context.SaveChangesAsync();
+             return client.IdClient;
+    }
+    
+    
 }
